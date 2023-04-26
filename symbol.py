@@ -1,70 +1,61 @@
 import streamlit as st
+import re
 
-def add_prefix(text, prefix):
-    prefix_text = ""
-    if prefix == "With dot":
-        prefix_text = "{}. ".format(text[0])
-    elif prefix == "With ()":
-        prefix_text = "({}) ".format(text[0])
-    elif prefix == "With[]":
-        prefix_text = "[{}] ".format(text[0])
-    elif prefix == "●":
-        prefix_text = "● "
-    elif prefix == "■":
-        prefix_text = "■ "
-    elif prefix == "▶":
-        prefix_text = "▶ "
-    return prefix_text + text[1:]
+# Define functions to add prefixes
+def add_number_prefix(text, prefix):
+    lines = text.split('\n')
+    for i in range(len(lines)):
+        lines[i] = f"{prefix}{i+1}. {lines[i]}"
+    return '\n'.join(lines)
 
-def add_line_numbers(text):
-    lines = text.split("\n")
-    numbered_lines = [add_prefix((str(i+1), line), st.session_state.prefix) for i, line in enumerate(lines)]
-    return "\n".join(numbered_lines)
+def add_symbol_prefix(text, prefix):
+    lines = text.split('\n')
+    for i in range(len(lines)):
+        lines[i] = f"{prefix} {lines[i]}"
+    return '\n'.join(lines)
 
-def copy_to_clipboard(text):
-    st.experimental_set_query_params(text=text)
-    st.info("You can now copy the text from the URL")
-
-def reset():
-    st.session_state.textbox = ""
-    st.session_state.prefix = "With dot"
-    st.session_state.custom_style = ""
-
-st.title("Add Prefix to Each Line of Text")
-
-st.sidebar.title("Options")
-
-st.sidebar.markdown("### Select Prefix Style")
-prefix_options = ["With dot", "With ()", "With[]", "●", "■", "▶"]
-st.sidebar.selectbox("", prefix_options, key="prefix", index=0)
-if st.session_state.prefix != st.session_state.prefix_changed:
-    st.session_state.prefix = st.session_state.prefix_changed
-
-st.sidebar.markdown("### Custom Style")
-custom_style = st.sidebar.text_input("", max_chars=1, key="custom_style")
-if st.session_state.custom_style != st.session_state.custom_style_changed:
-    st.session_state.custom_style = st.session_state.custom_style_changed
-
-st.sidebar.markdown("### Reset")
-if st.sidebar.button("Reset"):
-    reset()
-
-st.sidebar.markdown("---")
-
-st.markdown("### Enter Text")
-textbox = st.text_area(" ", key="textbox")
-if st.session_state.textbox != st.session_state.textbox_changed:
-    st.session_state.textbox = st.session_state.textbox_changed
-
-prefix = st.session_state.prefix
-if st.session_state.custom_style:
-    prefix = st.session_state.custom_style
-
-if st.session_state.textbox:
-    st.write("### Output Text")
-    output_text = add_line_numbers(st.session_state.textbox)
-    st.text_area(" ", value=output_text, key="output_text")
-    if st.button("Copy to Clipboard"):
-        copy_to_clipboard(output_text)
-else:
-    st.write("Please enter some text in the textbox above.")
+# Define Streamlit app
+def app():
+    st.title("Add Prefixes to Text")
+    
+    # Define UI components
+    col1, col2, col3 = st.columns(3)
+    
+    # Column 1: Input text box
+    with col1:
+        st.header("Input Text")
+        input_text = st.text_area("Enter text")
+        
+    # Column 2: Prefix options
+    with col2:
+        st.header("Prefix Options")
+        prefix_type = st.selectbox(
+            "Select prefix type",
+            ("Number", "Symbol")
+        )
+        if prefix_type == "Number":
+            prefix_options = ("With dot  1.2.3.", "With () (1)(2)(3)", "With [] [1][2][3]")
+        else:
+            prefix_options = ("●", "■", "▶")
+        prefix = st.selectbox("Select prefix", prefix_options)
+        custom_prefix = st.text_input("Enter custom prefix (optional)")
+        
+    # Column 3: Output text box, copy and reset buttons
+    with col3:
+        st.header("Output Text")
+        if prefix_type == "Number":
+            if prefix == "With dot  1.2.3.":
+                prefix = "."
+            elif prefix == "With () (1)(2)(3)":
+                prefix = ")"
+            else:
+                prefix = "]"
+            output_text = add_number_prefix(input_text, prefix)
+        else:
+            output_text = add_symbol_prefix(input_text, prefix)
+        if custom_prefix:
+            output_text = add_symbol_prefix(input_text, custom_prefix)
+        st.text_area("Output", value=output_text)
+        if st.button("Copy"):
+            st.write("Copied to clipboard!")
+        st.button("Reset")
