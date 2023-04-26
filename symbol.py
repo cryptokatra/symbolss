@@ -1,96 +1,65 @@
 import streamlit as st
 import pyperclip
 
-st.set_page_config(page_title="Prefixer", layout="wide")
+# Define function to add prefix to each line
+def add_prefix(text, prefix):
+    lines = text.split('\n')
+    new_lines = []
+    for i, line in enumerate(lines):
+        if prefix[0] == 'Number':
+            new_line = prefix[1] + str(i+1) + prefix[2] + ' ' + line
+        else:
+            new_line = prefix[1] + ' ' + line
+        new_lines.append(new_line)
+    return '\n'.join(new_lines)
 
-# Define function for copying to clipboard
-def copy_to_clipboard(text):
-    pyperclip.copy(text)
-    st.sidebar.text("Copied to clipboard!")
-    
-# Define function for resetting the app
-def reset_app():
-    text_input.text("")
-    dropdown_num.selectbox("Select prefix style:", prefix_options)
-    dropdown_symbol.selectbox("Select symbol:", symbol_options)
-    custom_prefix_text.empty()
-    custom_symbol_text.empty()
-    output_text_B.empty()
-    output_text_C.empty()
+# Define Streamlit app
+def app():
+    st.title("Add Prefix to Each Line")
 
-# Define prefix options
-prefix_options = ["With dot", "With ()", "With []", "Custom"]
-
-# Define symbol options
-symbol_options = ["●", "■", "▶", "Custom"]
-
-# Define streamlit widgets
-text_input = st.sidebar.text_area("Enter Text:")
-prefix_choice = st.sidebar.selectbox("Select prefix style:", prefix_options)
-dropdown_num = None
-custom_prefix_text = None
-if prefix_choice == "Custom":
-    custom_prefix_text = st.sidebar.text_input("Enter custom prefix:")
-else:
-    dropdown_num = st.sidebar.selectbox("", ["1. 2. 3.", "(1)(2)(3)", "[1][2][3]"])
-
-symbol_choice = st.sidebar.selectbox("Select symbol:", symbol_options)
-dropdown_symbol = None
-custom_symbol_text = None
-if symbol_choice == "Custom":
-    custom_symbol_text = st.sidebar.text_input("Enter custom symbol:")
-else:
-    dropdown_symbol = st.sidebar.selectbox("", ["●", "■", "▶"])
-
-output_text_B = st.empty()
-output_text_C = st.empty()
-
-# Create buttons for copying the output
-if st.sidebar.button('Copy B'):
-    copy_to_clipboard(output_text_B.to_dict()['children'][0])
-if st.sidebar.button('Copy C'):
-    copy_to_clipboard(output_text_C.to_dict()['children'][0])
-if st.sidebar.button('Reset'):
-    reset_app()
-
-# Get text input and split into lines
-text = text_input.splitlines()
-
-# Create new lines with prefixes based on user input
-new_lines_B = []
-prefix_num = 1
-for line in text:
-    prefix = ""
-    if prefix_choice == "With dot":
-        prefix = f"{prefix_num}. "
-    elif prefix_choice == "With ()":
-        prefix = f"({prefix_num})"
-    elif prefix_choice == "With []":
-        prefix = f"[{prefix_num}]"
+    # Sidebar
+    st.sidebar.subheader("Prefix Style")
+    prefix_type = st.sidebar.selectbox("Select Prefix Style", ["Numbered", "Symbol"])
+    if prefix_type == "Numbered":
+        number_style = st.sidebar.radio("Number Style", [("With dot", ".", "."), ("With ()", "(", ")"), ("With []", "[", "]")])
+        prefix = ("Number", number_style[0], number_style[1])
     else:
-        prefix = f"{custom_prefix_text.value} "
-    new_line = f"{prefix}{line}"
-    new_lines_B.append(new_line)
-    prefix_num += 1
+        symbol_style = st.sidebar.radio("Symbol Style", ["●", "■", "▶", "Custom"])
+        if symbol_style == "Custom":
+            custom_symbol = st.sidebar.text_input("Enter Custom Symbol")
+            if custom_symbol:
+                prefix = ("Symbol", custom_symbol)
+            else:
+                st.sidebar.warning("Please enter a custom symbol")
+                st.stop()
+        else:
+            prefix = ("Symbol", symbol_style)
 
-# Join new lines and write to output text box B
-if len(new_lines_B) > 0:
-    output_text_B.markdown("\n".join(new_lines_B))
+    # Main Page
+    st.subheader("Input Text")
+    text_input = st.text_area("Enter Text Here")
 
-# Create new lines with suffixes based on user input
-new_lines_C = []
-for line in text:
-    if symbol_choice == "●":
-        suffix = " ●"
-    elif symbol_choice == "■":
-        suffix = " ■"
-    elif symbol_choice == "▶":
-        suffix = " ▶"
-    else:
-        suffix = f" {custom_symbol_text.value}"
-    new_line = f"{line}{suffix}"
-    new_lines_C.append(new_line)
+    # Output for Number Prefix
+    st.subheader("Output with Number Prefix")
+    if text_input:
+        text_with_number_prefix = add_prefix(text_input, prefix)
+        st.code(text_with_number_prefix, language='text')
+        # Copy Button
+        if st.button("Copy to Clipboard"):
+            pyperclip.copy(text_with_number_prefix)
+            st.success("Text copied to clipboard")
 
-# Join new lines and write to output text box C
-if len(new_lines_C) > 0:
-    output_text_C.markdown("\n".join(new_lines_C))
+    # Output for Symbol Prefix
+    st.subheader("Output with Symbol Prefix")
+    if text_input:
+        symbol_prefix = ("Symbol", prefix[1])
+        text_with_symbol_prefix = add_prefix(text_input, symbol_prefix)
+        st.code(text_with_symbol_prefix, language='text')
+        # Copy Button
+        if st.button("Copy to Clipboard"):
+            pyperclip.copy(text_with_symbol_prefix)
+            st.success("Text copied to clipboard")
+
+    # Reset Button
+    if st.button("Reset"):
+        st.experimental_rerun()
