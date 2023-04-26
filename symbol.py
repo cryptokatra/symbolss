@@ -4,7 +4,7 @@ import streamlit as st
 st.title("Add Prefix to Text")
 
 # 定义变量
-text_input = st.text_area("Input Text:", height=200, weight=400, key='input')
+text_input = st.text_area("Input Text:", height=200, key='input')
 selected_format = st.selectbox("Select Format:", ["With dot  1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]", "●", "■", "▶", "Custom"],key='format')
 output_text = ""
 
@@ -64,4 +64,4 @@ elif selected_format == "Custom":
 
 # 显示结果文本框
 if output_text:
-    st.text_area("Output Text:", output_text, height=200, weight=400, key='output')
+    st.text_area("Output Text:", output_text, height=200, key='output')
