@@ -13,7 +13,7 @@ def add_prefix(prefix, lines, style):
             prefix_lines.append(f"[{i+1}]{prefix}{line}")
     elif style == "Custom":
         for i, line in enumerate(lines):
-            prefix_lines.append(f"{prefix{i+1}}{line}")
+            prefix_lines.append(f"{prefix+{i+1}}{line}")
     return prefix_lines
 
 st.title("Add Prefix Tool")
