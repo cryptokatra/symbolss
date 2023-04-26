@@ -1,76 +1,87 @@
 import streamlit as st
+import pickle
+from typing import List
 
-# Define the functions to add prefix to the text
-def add_prefix_with_dot(text):
-    lines = text.split("\n")
-    prefix = ""
-    new_lines = []
-    for i, line in enumerate(lines):
-        new_lines.append(f"{prefix}{i+1}. {line}")
-    return "\n".join(new_lines)
+def add_prefix(text: str, prefix: str) -> str:
+    return prefix + text
 
-def add_prefix_with_parenthesis(text):
-    lines = text.split("\n")
-    prefix = ""
-    new_lines = []
-    for i, line in enumerate(lines):
-        new_lines.append(f"{prefix}({i+1}){line}")
-    return "\n".join(new_lines)
-
-def add_prefix_with_bracket(text):
-    lines = text.split("\n")
-    prefix = ""
-    new_lines = []
-    for i, line in enumerate(lines):
-        new_lines.append(f"{prefix}[{i+1}]{line}")
-    return "\n".join(new_lines)
-
-# Define the Streamlit app
-def app():
-    st.set_page_config(page_title="Prefix Adder")
-
-    st.title("Prefix Adder")
-
-    # Define the input text box
-    st.sidebar.header("Input Text")
-    text = st.sidebar.text_area("Enter text here", height=300)
-
-    # Define the prefix selection widgets
-    st.sidebar.header("Prefix Options")
-    prefix_type = st.sidebar.selectbox("Select prefix type", ["Numbers", "Symbols", "Custom"])
-    if prefix_type == "Numbers":
-        prefix_value = st.sidebar.selectbox("Select prefix value", ["1.2.3.", "(1)(2)(3)", "[1][2][3]"])
-    elif prefix_type == "Symbols":
-        prefix_value = st.sidebar.selectbox("Select prefix value", ["●", "■", "▶"])
+def add_number_prefix(text: str, start: int, step: int, with_dot: bool = True) -> str:
+    if with_dot:
+        prefix = f'{start}.'
     else:
-        prefix_value = st.sidebar.text_input("Enter custom prefix value")
+        prefix = f'({start})'
+    return add_prefix(text, prefix)
 
-    # Define the output text boxes
-    st.header("Output Text")
-    st.subheader("Text with numbered prefix")
-    if prefix_type == "Numbers":
-        output_text = add_prefix_with_dot(text) if prefix_value == "1.2.3." else \
-                      add_prefix_with_parenthesis(text) if prefix_value == "(1)(2)(3)" else \
-                      add_prefix_with_bracket(text) if prefix_value == "[1][2][3]" else ""
-    else:
-        output_text = f"{prefix_value}\n{text}".replace("\n", f"\n{prefix_value}")
-    st.text_area("Text with numbered prefix", value=output_text, height=300)
-    st.subheader("Text with symbol prefix")
-    if prefix_type == "Numbers":
-        st.text_area("Text with symbol prefix", value="")
-    else:
-        output_text = f"{prefix_value}\n{text}".replace("\n", f"\n{prefix_value}")
-        st.text_area("Text with symbol prefix", value=output_text, height=300)
+def add_symbol_prefix(text: str, symbol: str) -> str:
+    return add_prefix(text, symbol)
 
-    # Define the copy and reset buttons
-    if st.button("Copy text with numbered prefix"):
-        st.write("Text copied to clipboard!")
-        st.experimental_set_query_params(output_text=output_text)
-    if st.button("Copy text with symbol prefix"):
-        st.write("Text copied to clipboard!")
-        st.experimental_set_query_params(output_text=output_text)
-    if st.button("Reset"):
-        st.experimental_set_query_params(output_text="")
-        
-if __name__ == "__main__":
-    app()
+def add_custom_prefix(text: str, prefix: str) -> str:
+    return add_prefix(text, prefix)
+
+def add_prefix_to_lines(lines: List[str], prefix_func, *args, **kwargs) -> List[str]:
+    result = []
+    count = 0
+    for line in lines:
+        count += 1
+        prefix = prefix_func(line, count, *args, **kwargs)
+        result.append(add_prefix(line, prefix))
+    return result
+
+def save_to_pickle(data, filename):
+    with open(filename, 'wb') as f:
+        pickle.dump(data, f)
+
+def load_from_pickle(filename):
+    with open(filename, 'rb') as f:
+        data = pickle.load(f)
+    return data
+
+def main():
+    st.title('Add prefix to text lines')
+
+    # Create input widgets
+    input_text = st.text_area('Input text', height=200)
+    with_number_dropdown = st.selectbox('With number', ['With dot', 'With ()', 'With []'])
+    symbol_dropdown = st.selectbox('Symbol', ['●', '■', '▶'])
+    custom_input = st.text_input('Custom prefix')
+    
+    # Create output widgets
+    number_output = st.empty()
+    symbol_output = st.empty()
+
+    # Create buttons
+    copy_number_button = st.button('Copy number output')
+    copy_symbol_button = st.button('Copy symbol output')
+    reset_button = st.button('Reset')
+
+    # Process input text
+    if input_text:
+        lines = input_text.split('\n')
+        if with_number_dropdown == 'With dot':
+            prefix_func = add_number_prefix
+            prefix_args = (1, 1, True)
+        elif with_number_dropdown == 'With ()':
+            prefix_func = add_number_prefix
+            prefix_args = (1, 1, False)
+        elif with_number_dropdown == 'With []':
+            prefix_func = add_number_prefix
+            prefix_args = (1, 1, False)
+        if custom_input:
+            prefix_func = add_custom_prefix
+            prefix_args = (custom_input,)
+        symbol = symbol_dropdown or ' '
+        number_lines = add_prefix_to_lines(lines, prefix_func, *prefix_args)
+        symbol_lines = add_prefix_to_lines(lines, add_symbol_prefix, symbol)
+        number_output.text('\n'.join(number_lines))
+        symbol_output.text('\n'.join(symbol_lines))
+
+    # Handle button clicks
+    if copy_number_button:
+        st.experimental_set_query_params(output=number_output.text())
+    if copy_symbol_button:
+        st.experimental_set_query_params(output=symbol_output.text())
+    if reset_button:
+        st.experimental_set_query_params(output='')
+
+if __name__ == '__main__':
+    main()
