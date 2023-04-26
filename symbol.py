@@ -1,73 +1,65 @@
 import streamlit as st
 
-# Set default values for customization options
-number_style = '1'
-symbol_style = '● BLACK CIRCLE'
+def main():
+    st.set_page_config(page_title="Prefix Tool", page_icon=":pencil2:")
+    st.title("Prefix Tool")
 
-# Define the HTML symbols
-number_symbols = {'1': '1.', '2': '2.', '3': '3.', 'Custom': ''}
-symbol_symbols = {'● BLACK CIRCLE': '●', '◘ INVERSE BULLET': '◘', '‣ TRIANGULAR BULLET': '‣', 'Custom': ''}
+    # 文本框A
+    st.subheader("Input Text")
+    input_text = st.text_area("Enter text here", height=150)
 
-# Define the functions for adding the number or symbol
-def add_number(text):
-    if number_style == 'Custom':
-        return text
+    # 文本框B + 選擇數字
+    st.subheader("Add Prefix Number")
+    prefix_num = st.selectbox("Select number style", options=["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]", "Custom"], index=0)
+    if prefix_num == "Custom":
+        custom_num = st.text_input("Enter custom number style")
+        prefix_num = custom_num
+
+    with_num = ""
+    if prefix_num.startswith("With dot"):
+        with_num = "1. "
+    elif prefix_num.startswith("With ()"):
+        with_num = "(1) "
+    elif prefix_num.startswith("With[]"):
+        with_num = "[1] "
     else:
-        return number_symbols[number_style] + ' ' + text
+        with_num = prefix_num + " "
 
-def add_symbol(text):
-    if symbol_style == 'Custom':
-        return text
-    else:
-        return symbol_symbols[symbol_style] + ' ' + text
+    text_with_prefix_num = ""
+    text_lines = input_text.split("\n")
+    for index, line in enumerate(text_lines):
+        text_with_prefix_num += f"{with_num}{line}\n"
 
-# Define the Streamlit app
-def app():
-    st.title('List Item Adder')
+    st.text_area("Text with Prefix Number", value=text_with_prefix_num, height=150)
 
-    # Input text box
-    text = st.text_area('Input Text')
+    # 文本框C + 選擇符號
+    st.subheader("Add Prefix Symbol")
+    prefix_sym = st.selectbox("Select symbol style", options=["BLACK CIRCLE ●", "BLACK SQUARE ■", "BLACK RIGHT-POINTING TRIANGLE ▶", "Custom"], index=0)
+    if prefix_sym == "Custom":
+        custom_sym = st.text_input("Enter custom symbol style")
+        prefix_sym = custom_sym
 
-    # Number customization option
-    st.subheader('Number Style')
-    number_style = st.selectbox('Select a number style', list(number_symbols.keys()))
-    if number_style == 'Custom':
-        custom_number = st.text_input('Enter a custom number', value='')
-        number_symbols[number_style] = custom_number
+    text_with_prefix_sym = ""
+    text_lines = input_text.split("\n")
+    for index, line in enumerate(text_lines):
+        text_with_prefix_sym += f"{prefix_sym} {line}\n"
 
-    # Symbol customization option
-    st.subheader('Symbol Style')
-    symbol_style = st.selectbox('Select a symbol style', list(symbol_symbols.keys()))
-    if symbol_style == 'Custom':
-        custom_symbol = st.text_input('Enter a custom symbol', value='')
-        symbol_symbols[symbol_style] = custom_symbol
+    st.text_area("Text with Prefix Symbol", value=text_with_prefix_sym, height=150)
 
-    # Add number and symbol to text
-    add_number_button = st.button('Add Number')
-    add_symbol_button = st.button('Add Symbol')
+    # 清除所有
+    if st.button("Clear All"):
+        input_text = ""
+        text_with_prefix_num = ""
+        text_with_prefix_sym = ""
 
-    if add_number_button:
-        text = add_number(text)
+    # 複製到剪貼板
+    if st.button("Copy Text with Prefix Number"):
+        st.write("Copied to clipboard!")
+        st.experimental_set_query_params(text_with_prefix_num=text_with_prefix_num)
 
-    if add_symbol_button:
-        text = add_symbol(text)
+    if st.button("Copy Text with Prefix Symbol"):
+        st.write("Copied to clipboard!")
+        st.experimental_set_query_params(text_with_prefix_sym=text_with_prefix_sym)
 
-    # Output text box
-    st.subheader('Output Text')
-    st.text(text)
-
-    # Copy to clipboard buttons
-    col1, col2 = st.beta_columns(2)
-    with col1:
-        if st.button('Copy Numbered Text'):
-            st.write('Copied!')
-            st.text_to_copy(add_number(text))
-
-    with col2:
-        if st.button('Copy Symbolled Text'):
-            st.write('Copied!')
-            st.text_to_copy(add_symbol(text))
-
-    # Clear all button
-    if st.button('CLEAR ALL'):
-        text = ''
+if __name__ == "__main__":
+    main()
