@@ -1,87 +1,70 @@
 import streamlit as st
-import pickle
-from typing import List
 
-def add_prefix(text: str, prefix: str) -> str:
-    return prefix + text
+def add_prefix(text, prefix):
+    prefix_text = ""
+    if prefix == "With dot":
+        prefix_text = "{}. ".format(text[0])
+    elif prefix == "With ()":
+        prefix_text = "({}) ".format(text[0])
+    elif prefix == "With[]":
+        prefix_text = "[{}] ".format(text[0])
+    elif prefix == "●":
+        prefix_text = "● "
+    elif prefix == "■":
+        prefix_text = "■ "
+    elif prefix == "▶":
+        prefix_text = "▶ "
+    return prefix_text + text[1:]
 
-def add_number_prefix(text: str, start: int, step: int, with_dot: bool = True) -> str:
-    if with_dot:
-        prefix = f'{start}.'
-    else:
-        prefix = f'({start})'
-    return add_prefix(text, prefix)
+def add_line_numbers(text):
+    lines = text.split("\n")
+    numbered_lines = [add_prefix((str(i+1), line), st.session_state.prefix) for i, line in enumerate(lines)]
+    return "\n".join(numbered_lines)
 
-def add_symbol_prefix(text: str, symbol: str) -> str:
-    return add_prefix(text, symbol)
+def copy_to_clipboard(text):
+    st.experimental_set_query_params(text=text)
+    st.info("You can now copy the text from the URL")
 
-def add_custom_prefix(text: str, prefix: str) -> str:
-    return add_prefix(text, prefix)
+def reset():
+    st.session_state.textbox = ""
+    st.session_state.prefix = "With dot"
+    st.session_state.custom_style = ""
 
-def add_prefix_to_lines(lines: List[str], prefix_func, *args, **kwargs) -> List[str]:
-    result = []
-    count = 0
-    for line in lines:
-        count += 1
-        prefix = prefix_func(line, count, *args, **kwargs)
-        result.append(add_prefix(line, prefix))
-    return result
+st.title("Add Prefix to Each Line of Text")
 
-def save_to_pickle(data, filename):
-    with open(filename, 'wb') as f:
-        pickle.dump(data, f)
+st.sidebar.title("Options")
 
-def load_from_pickle(filename):
-    with open(filename, 'rb') as f:
-        data = pickle.load(f)
-    return data
+st.sidebar.markdown("### Select Prefix Style")
+prefix_options = ["With dot", "With ()", "With[]", "●", "■", "▶"]
+st.sidebar.selectbox("", prefix_options, key="prefix", index=0)
+if st.session_state.prefix != st.session_state.prefix_changed:
+    st.session_state.prefix = st.session_state.prefix_changed
 
-def main():
-    st.title('Add prefix to text lines')
+st.sidebar.markdown("### Custom Style")
+custom_style = st.sidebar.text_input("", max_chars=1, key="custom_style")
+if st.session_state.custom_style != st.session_state.custom_style_changed:
+    st.session_state.custom_style = st.session_state.custom_style_changed
 
-    # Create input widgets
-    input_text = st.text_area('Input text', height=200)
-    with_number_dropdown = st.selectbox('With number', ['With dot', 'With ()', 'With []'])
-    symbol_dropdown = st.selectbox('Symbol', ['●', '■', '▶'])
-    custom_input = st.text_input('Custom prefix')
-    
-    # Create output widgets
-    number_output = st.empty()
-    symbol_output = st.empty()
+st.sidebar.markdown("### Reset")
+if st.sidebar.button("Reset"):
+    reset()
 
-    # Create buttons
-    copy_number_button = st.button('Copy number output')
-    copy_symbol_button = st.button('Copy symbol output')
-    reset_button = st.button('Reset')
+st.sidebar.markdown("---")
 
-    # Process input text
-    if input_text:
-        lines = input_text.split('\n')
-        if with_number_dropdown == 'With dot':
-            prefix_func = add_number_prefix
-            prefix_args = (1, 1, True)
-        elif with_number_dropdown == 'With ()':
-            prefix_func = add_number_prefix
-            prefix_args = (1, 1, False)
-        elif with_number_dropdown == 'With []':
-            prefix_func = add_number_prefix
-            prefix_args = (1, 1, False)
-        if custom_input:
-            prefix_func = add_custom_prefix
-            prefix_args = (custom_input,)
-        symbol = symbol_dropdown or ' '
-        number_lines = add_prefix_to_lines(lines, prefix_func, *prefix_args)
-        symbol_lines = add_prefix_to_lines(lines, add_symbol_prefix, symbol)
-        number_output.text('\n'.join(number_lines))
-        symbol_output.text('\n'.join(symbol_lines))
+st.markdown("### Enter Text")
+textbox = st.text_area(" ", key="textbox")
+if st.session_state.textbox != st.session_state.textbox_changed:
+    st.session_state.textbox = st.session_state.textbox_changed
 
-    # Handle button clicks
-    if copy_number_button:
-        st.experimental_set_query_params(output=number_output.text())
-    if copy_symbol_button:
-        st.experimental_set_query_params(output=symbol_output.text())
-    if reset_button:
-        st.experimental_set_query_params(output='')
+prefix = st.session_state.prefix
+if st.session_state.custom_style:
+    prefix = st.session_state.custom_style
 
-if __name__ == '__main__':
-    main()
+if st.session_state.textbox:
+    st.write("### Output Text")
+    output_text = add_line_numbers(st.session_state.textbox)
+    st.text_area(" ", value=output_text, key="output_text")
+    if st.button("Copy to Clipboard"):
+        copy_to_clipboard(output_text)
+else:
+    st.write("Please enter some text in the textbox above.")
