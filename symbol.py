@@ -65,9 +65,18 @@ elif selected_format == "Custom":
 # 显示结果文本框 
 output_text = output_text.strip() 
 if output_text: 
-    st.markdown(f"### Output Text:") 
-    st.markdown(output_text) 
+     st.markdown(f"**Output Text:**", unsafe_allow_html=True) 
+    
  
-# 返回按钮 
-if st.button("Return"): 
-    st.empty()
+# 显示复制按钮 
+if st.button("Copy Text"): 
+    st.write("Text Copied to Clipboard!") 
+    st.text(output_text)  # 显示结果 
+ 
+# 显示清空按钮 
+if st.button("Clear All Content"): 
+    text_input = "" 
+    selected_format = "" 
+    output_text = "" 
+    st.text_area("Input Text:", value=text_input, height=300, key="input_text") 
+    st.text_area("Output Text:", value=output_text, height=300, key="output_text")
