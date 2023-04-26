@@ -56,12 +56,12 @@ elif selected_format == "Custom":
 # 显示结果文本框 
 col1, col2, col3 = st.columns(3) 
 with col1: 
-    st.text_area("Input Text:", text_input, height=200) 
+    st.text_area("Input Text:", text_input, height=200, key="my_unique_key") 
 with col2: 
     st.write("") 
     st.selectbox("Select Format:", ["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]", "●", "■", "▶", "Custom"]) 
 with col3: 
-    st.text_area("Output Text:", output_text, height=200) 
+    st.text_area("Output Text:", output_text, height=200, key="my_unique_key") 
  
 # 显示复制按钮 
 st.button("Copy Text")
