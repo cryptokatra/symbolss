@@ -1,71 +1,49 @@
 import streamlit as st
 
-def add_prefix(text, prefix):
-    lines = text.split('\n')
-    if prefix == "With dot":
-        prefix_list = [f"{i}." for i in range(1, len(lines) + 1)]
-    elif prefix == "With ()":
-        prefix_list = [f"({i})" for i in range(1, len(lines) + 1)]
-    elif prefix == "With[]":
-        prefix_list = [f"[{i}]" for i in range(1, len(lines) + 1)]
-    elif prefix == "●":
-        prefix_list = ["●"] * len(lines)
-    elif prefix == "■":
-        prefix_list = ["■"] * len(lines)
-    elif prefix == "▶":
-        prefix_list = ["▶"] * len(lines)
-    else:
-        prefix_list = [prefix] * len(lines)
-    return "\n".join([f"{prefix_list[i]} {lines[i]}" for i in range(len(lines))])
+def add_prefix_text(text, prefix):
+    lines = text.split("\n")
+    output = ""
+    for i, line in enumerate(lines):
+        if prefix.isdigit():
+            prefix_text = prefix + ". "
+            prefix = str(int(prefix) + 1)
+        else:
+            prefix_text = prefix + " "
+        output += prefix_text + line + "\n"
+    return output
 
 def main():
-    st.set_page_config(page_title="Add Prefix App")
-    st.title("Add Prefix App")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        text_input = st.text_area("Enter your text here:", height=300)
 
-    # Column 1
-    st.sidebar.markdown("# Input Text")
-    text_input = st.sidebar.text_area("Enter text here:", height=500)
+    with col2:
+        st.write("Select prefix type:")
+        prefix_type = st.radio("", ["Number", "Symbol"])
+        if prefix_type == "Number":
+            prefix_options = ["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]"]
+        else:
+            prefix_options = ["●", "■", "▶"]
+        prefix = st.selectbox("Select prefix option:", prefix_options)
+        custom_prefix = st.text_input("Or enter a custom prefix:")
 
-    # Column 2
-    st.sidebar.markdown("# Prefix Options")
-    prefix_type = st.sidebar.selectbox("Select prefix type:", ["With dot", "With ()", "With[]", "●", "■", "▶", "Custom"])
+    with col3:
+        if st.button("Add Prefix"):
+            if custom_prefix:
+                prefix = custom_prefix
+            if prefix_type == "Number":
+                prefix = prefix.split(".")[0]
+            output = add_prefix_text(text_input, prefix)
+            output_area = st.empty()
+            output_area.text_area("Output:", value=output, height=300)
 
-    if prefix_type == "Custom":
-        prefix = st.sidebar.text_input("Enter custom prefix here:")
-    else:
-        prefix = prefix_type
-
-    # Column 3
-    st.markdown("# Output Text")
-    output_text = add_prefix(text_input, prefix)
-    text_output = st.text_area("Result", value=output_text, height=500)
-
-    if st.button("Copy"):
-        st.experimental_set_query_params(text_output=text_output)
-
-    if st.button("Clear"):
-        text_input = ""
-        text_output = ""
-        st.experimental_set_query_params(text_input="", text_output="")
+        if st.button("Copy Output"):
+            output_area = st.empty()
+            output_area.text_area("Output:", value=output, height=300)
+            output_area.text_input("Copy the text below:")
         
-    st.write(" ")
-    
-    if st.button("Add Prefix"):
-        output_text = add_prefix(text_input, prefix)
-
-    st.radio("Select prefix type:", options=["With dot", "With ()", "With[]", "●", "■", "▶", "Custom"], key="options")
-
-    if st.session_state.options == "Custom":
-        prefix = st.text_input("Enter custom prefix here:", key="custom-prefix")
-    else:
-        prefix = st.session_state.options
-
-    st.text_input("Enter text here:", value=text_input, key="input-text")
-
-    output_text = add_prefix(text_input, prefix)
-    st.code(output_text)
-
-    st.empty()
+        if st.button("Reset"):
+            st.experimental_rerun()
 
 if __name__ == "__main__":
     main()
