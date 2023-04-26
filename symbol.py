@@ -52,10 +52,10 @@ st.session_state["symbol_style"] = symbol_style
 
 st.sidebar.markdown("# 右面")
 st.sidebar.markdown("## 文本框 B")
-number_output = st.sidebar.text_area("每一行文字的前綴加入數字", value=st.session_state["number_output"], height=200, readonly=True)
+number_output = st.sidebar.text_area("每一行文字的前綴加入數字", value=st.session_state["number_output"], height=200, key="number_output", disabled=True)
 
 st.sidebar.markdown("## 文本框 C")
-symbol_output = st.sidebar.text_area("每一行文字的前綴加入符號", value=st.session_state["symbol_output"], height=200, readonly=True)
+symbol_output = st.sidebar.text_area("每一行文字的前綴加入符號", value=st.session_state["symbol_output"], height=200, key="symbol_output", disabled=True)
 
 st.sidebar.button("Copy 文本框 B 內容", to_copy=st.session_state["number_output"])
 st.sidebar.button("Copy 文本框 C 內容", to_copy=st.session_state["symbol_output"])
