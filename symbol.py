@@ -1,69 +1,68 @@
 import streamlit as st
 
-# Define the prefix options
-number_prefix = ["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]"]
-symbol_prefix = ["●", "■", "▶"]
-custom_prefix = "Custom"
+def add_prefix(text_lines, prefix):
+    prefixed_lines = []
+    for i, line in enumerate(text_lines):
+        prefixed_line = f"{prefix}{line}"
+        if i != len(text_lines) - 1:
+            prefixed_line += "\n"
+        prefixed_lines.append(prefixed_line)
+    return "".join(prefixed_lines)
 
-# Define the prefix style options
-number_style = ["Default", "Custom"]
-symbol_style = ["Default", "Custom"]
+def add_numbers(text):
+    lines = text.split("\n")
+    numbered_lines = add_prefix(lines, f"{st.session_state['number_style']}")
+    st.session_state["number_output"] = numbered_lines
 
-# Define the Streamlit app
-def app():
-    st.title("Add Prefix to Text")
-    
-    # Create the left column for user input
-    left_col, mid_col, right_col = st.beta_columns([2,1,2])
-    
-    with left_col:
-        # Get user input text
-        user_input = st.text_area("Input Text Here:")
-    
-    with mid_col:
-        # Select the prefix type (number or symbol)
-        prefix_type = st.selectbox("Select Prefix Type:", ["Number", "Symbol", "Custom"])
-        
-        # Select the prefix style (default or custom)
-        if prefix_type == "Number":
-            prefix_style = st.selectbox("Select Prefix Style:", number_style)
-        elif prefix_type == "Symbol":
-            prefix_style = st.selectbox("Select Prefix Style:", symbol_style)
-        elif prefix_type == "Custom":
-            prefix_style = custom_prefix
-    
-    with right_col:
-        # Create a button to add the prefix to the text
-        if st.button("Add Prefix"):
-            # Split the input text into lines
-            lines = user_input.split("\n")
-            
-            # Create a counter for the prefix
-            prefix_count = 1
-            
-            # Add the prefix to each line of text
-            for i in range(len(lines)):
-                if prefix_type == "Number" and prefix_style == "Default":
-                    lines[i] = str(prefix_count) + ". " + lines[i]
-                elif prefix_type == "Number" and prefix_style == "Custom":
-                    prefix = st.text_input("Enter Custom Prefix for Line " + str(i+1) + ":", value=str(prefix_count) + ". ")
-                    lines[i] = prefix + lines[i]
-                elif prefix_type == "Symbol" and prefix_style == "Default":
-                    lines[i] = symbol_prefix[prefix_count%len(symbol_prefix)] + " " + lines[i]
-                elif prefix_type == "Symbol" and prefix_style == "Custom":
-                    prefix = st.selectbox("Select Custom Prefix for Line " + str(i+1) + ":", symbol_prefix)
-                    lines[i] = prefix + " " + lines[i]
-                elif prefix_type == "Custom":
-                    prefix = st.text_input("Enter Custom Prefix for Line " + str(i+1) + ":", value=prefix_style)
-                    lines[i] = prefix + lines[i]
-                prefix_count += 1
-            
-            # Join the lines back together with newline characters
-            result = "\n".join(lines)
-            
-            # Display the result in the output text boxes
-            st.text_area("Text with Number Prefix:", result)
-            st.text_area("Text with Symbol Prefix:", result)
+def add_symbols(text):
+    lines = text.split("\n")
+    symbol_lines = add_prefix(lines, f"{st.session_state['symbol_style']}")
+    st.session_state["symbol_output"] = symbol_lines
 
-if __name__ == "__main__":
-    app()
+def reset():
+    st.session_state["text_input"] = ""
+    st.session_state["number_output"] = ""
+    st.session_state["symbol_output"] = ""
+
+if "text_input" not in st.session_state:
+    st.session_state["text_input"] = ""
+if "number_style" not in st.session_state:
+    st.session_state["number_style"] = "1."
+if "symbol_style" not in st.session_state:
+    st.session_state["symbol_style"] = "●"
+if "number_output" not in st.session_state:
+    st.session_state["number_output"] = ""
+if "symbol_output" not in st.session_state:
+    st.session_state["symbol_output"] = ""
+
+st.sidebar.markdown("# 左面")
+text_input = st.sidebar.text_area("請輸入任何文字", value=st.session_state["text_input"], height=200)
+st.session_state["text_input"] = text_input
+
+st.sidebar.markdown("# 中間")
+number_style = st.sidebar.selectbox("選擇加入什麼數字", options=["1.2.3.", "(1)(2)(3)", "[1][2][3]", "自定義"])
+if number_style == "自定義":
+    number_style = st.sidebar.text_input("自定義數字 style")
+st.session_state["number_style"] = number_style
+
+symbol_style = st.sidebar.selectbox("選擇加入什麼符號", options=["●", "■", "▶", "自定義"])
+if symbol_style == "自定義":
+    symbol_style = st.sidebar.text_input("自定義符號 style")
+st.session_state["symbol_style"] = symbol_style
+
+st.sidebar.markdown("# 右面")
+st.sidebar.markdown("## 文本框 B")
+number_output = st.sidebar.text_area("每一行文字的前綴加入數字", value=st.session_state["number_output"], height=200, readonly=True)
+
+st.sidebar.markdown("## 文本框 C")
+symbol_output = st.sidebar.text_area("每一行文字的前綴加入符號", value=st.session_state["symbol_output"], height=200, readonly=True)
+
+st.sidebar.button("Copy 文本框 B 內容", to_copy=st.session_state["number_output"])
+st.sidebar.button("Copy 文本框 C 內容", to_copy=st.session_state["symbol_output"])
+st.sidebar.button("Reset", on_click=reset)
+
+st.title("文本前綴加入數字或符號")
+add_numbers(text_input)
+add_symbols(text_input)
+st.write(f"加入數字的結果：\n{st.session_state['number_output']}")
+st.write(f"加入符號的結果：\n{st.session_state['symbol_output']}")
