@@ -1,59 +1,69 @@
 import streamlit as st
-import pyperclip
 
-def add_prefix(prefix, lines, style):
-    prefix_lines = []
-    if style == "With dot":
-        for i, line in enumerate(lines):
-            prefix_lines.append(f"{i+1}{prefix}{line}")
-    elif style == "With ()":
-        for i, line in enumerate(lines):
-            prefix_lines.append(f"({i+1}){prefix}{line}")
-    elif style == "With[]":
-        for i, line in enumerate(lines):
-            prefix_lines.append(f"[{i+1}]{prefix}{line}")
-    return prefix_lines
+# Define the prefix options
+number_prefix = ["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]"]
+symbol_prefix = ["●", "■", "▶"]
+custom_prefix = "Custom"
 
-# Define the copy function
-def copy_to_clipboard(text):
-    pyperclip.copy(text)
-    st.success("Copied to clipboard!")
+# Define the prefix style options
+number_style = ["Default", "Custom"]
+symbol_style = ["Default", "Custom"]
 
-st.title("Add Prefix Tool")
-
-# Define the text input box for the user
-text_input = st.text_area("Enter Text Here:", height=180)
-
-# Define the prefix style dropdown for the user
-prefix_style = st.selectbox("Select Prefix Style:", ("With dot", "With ()", "With[]"))
-
-# Define the prefix input box for the user
-prefix_input = st.text_input("Enter Prefix Here:", "")
-
-# Define the symbol style dropdown for the user
-symbol_style = st.selectbox("Select Symbol Style:", ("●", "■", "▶"))
-
-# Define the symbol input box for the user
-symbol_input = st.text_input("Enter Symbol Here:", "●")
-
-# Define the buttons
-if st.button("Add Prefix"):
-    lines = text_input.split("\n")
-    prefix_lines = add_prefix(prefix_input, lines, prefix_style)
-    prefix_text = "\n".join(prefix_lines)
-    st.text_area("Prefixed Text:", value=prefix_text, height=180)
-    if st.button("Copy to Clipboard"):
-        copy_to_clipboard(prefix_text)
+# Define the Streamlit app
+def app():
+    st.title("Add Prefix to Text")
+    
+    # Create the left column for user input
+    left_col, mid_col, right_col = st.beta_columns([2,1,2])
+    
+    with left_col:
+        # Get user input text
+        user_input = st.text_area("Input Text Here:")
+    
+    with mid_col:
+        # Select the prefix type (number or symbol)
+        prefix_type = st.selectbox("Select Prefix Type:", ["Number", "Symbol", "Custom"])
         
-if st.button("Add Symbol"):
-    lines = text_input.split("\n")
-    symbol_lines = [f"{symbol_input} {line}" for line in lines]
-    symbol_text = "\n".join(symbol_lines)
-    st.text_area("Symbolized Text:", value=symbol_text, height=180)
-    if st.button("Copy to Clipboard"):
-        copy_to_clipboard(symbol_text)
+        # Select the prefix style (default or custom)
+        if prefix_type == "Number":
+            prefix_style = st.selectbox("Select Prefix Style:", number_style)
+        elif prefix_type == "Symbol":
+            prefix_style = st.selectbox("Select Prefix Style:", symbol_style)
+        elif prefix_type == "Custom":
+            prefix_style = custom_prefix
+    
+    with right_col:
+        # Create a button to add the prefix to the text
+        if st.button("Add Prefix"):
+            # Split the input text into lines
+            lines = user_input.split("\n")
+            
+            # Create a counter for the prefix
+            prefix_count = 1
+            
+            # Add the prefix to each line of text
+            for i in range(len(lines)):
+                if prefix_type == "Number" and prefix_style == "Default":
+                    lines[i] = str(prefix_count) + ". " + lines[i]
+                elif prefix_type == "Number" and prefix_style == "Custom":
+                    prefix = st.text_input("Enter Custom Prefix for Line " + str(i+1) + ":", value=str(prefix_count) + ". ")
+                    lines[i] = prefix + lines[i]
+                elif prefix_type == "Symbol" and prefix_style == "Default":
+                    lines[i] = symbol_prefix[prefix_count%len(symbol_prefix)] + " " + lines[i]
+                elif prefix_type == "Symbol" and prefix_style == "Custom":
+                    prefix = st.selectbox("Select Custom Prefix for Line " + str(i+1) + ":", symbol_prefix)
+                    lines[i] = prefix + " " + lines[i]
+                elif prefix_type == "Custom":
+                    prefix = st.text_input("Enter Custom Prefix for Line " + str(i+1) + ":", value=prefix_style)
+                    lines[i] = prefix + lines[i]
+                prefix_count += 1
+            
+            # Join the lines back together with newline characters
+            result = "\n".join(lines)
+            
+            # Display the result in the output text boxes
+            st.text_area("Text with Number Prefix:", result)
+            st.text_area("Text with Symbol Prefix:", result)
 
-if st.button("Clear All"):
-    st.text_area("Enter Text Here:", value="", height=180)
-    st.text_input("Enter Prefix Here:", value="")
-    st.text_input("Enter Symbol Here:", value="")
+if __name__ == "__main__":
+    app()
