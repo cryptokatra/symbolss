@@ -1,65 +1,70 @@
 import streamlit as st
 import pyperclip
 
-# Define function to add prefix to each line
-def add_prefix(text, prefix):
-    lines = text.split('\n')
-    new_lines = []
-    for i, line in enumerate(lines):
-        if prefix[0] == 'Number':
-            new_line = prefix[1] + str(i+1) + prefix[2] + ' ' + line
-        else:
-            new_line = prefix[1] + ' ' + line
-        new_lines.append(new_line)
-    return '\n'.join(new_lines)
+def add_prefix(input_text, prefix):
+    output_text = []
+    for index, line in enumerate(input_text.splitlines(), start=1):
+        output_text.append(f"{prefix}{index}. {line}")
+    return '\n'.join(output_text)
 
-# Define Streamlit app
-def app():
-    st.title("Add Prefix to Each Line")
+def add_prefix_with_symbol(input_text, symbol):
+    output_text = []
+    for line in input_text.splitlines():
+        output_text.append(f"{symbol} {line}")
+    return '\n'.join(output_text)
 
-    # Sidebar
-    st.sidebar.subheader("Prefix Style")
-    prefix_type = st.sidebar.selectbox("Select Prefix Style", ["Numbered", "Symbol"])
-    if prefix_type == "Numbered":
-        number_style = st.sidebar.radio("Number Style", [("With dot", ".", "."), ("With ()", "(", ")"), ("With []", "[", "]")])
-        prefix = ("Number", number_style[0], number_style[1])
-    else:
-        symbol_style = st.sidebar.radio("Symbol Style", ["●", "■", "▶", "Custom"])
-        if symbol_style == "Custom":
-            custom_symbol = st.sidebar.text_input("Enter Custom Symbol")
-            if custom_symbol:
-                prefix = ("Symbol", custom_symbol)
-            else:
-                st.sidebar.warning("Please enter a custom symbol")
-                st.stop()
-        else:
-            prefix = ("Symbol", symbol_style)
+def get_number_style(style):
+    if style == "With dot":
+        return "."
+    elif style == "With ()":
+        return "()"
+    elif style == "With []":
+        return "[]"
 
-    # Main Page
-    st.subheader("Input Text")
-    text_input = st.text_area("Enter Text Here")
+def get_symbol_style(style):
+    if style == "●":
+        return "●"
+    elif style == "■":
+        return "■"
+    elif style == "▶":
+        return "▶"
 
-    # Output for Number Prefix
-    st.subheader("Output with Number Prefix")
-    if text_input:
-        text_with_number_prefix = add_prefix(text_input, prefix)
-        st.code(text_with_number_prefix, language='text')
-        # Copy Button
-        if st.button("Copy to Clipboard"):
-            pyperclip.copy(text_with_number_prefix)
-            st.success("Text copied to clipboard")
+def copy_to_clipboard(text):
+    pyperclip.copy(text)
 
-    # Output for Symbol Prefix
-    st.subheader("Output with Symbol Prefix")
-    if text_input:
-        symbol_prefix = ("Symbol", prefix[1])
-        text_with_symbol_prefix = add_prefix(text_input, symbol_prefix)
-        st.code(text_with_symbol_prefix, language='text')
-        # Copy Button
-        if st.button("Copy to Clipboard"):
-            pyperclip.copy(text_with_symbol_prefix)
-            st.success("Text copied to clipboard")
-
-    # Reset Button
+# Create the Streamlit web app
+def main():
+    st.title("Add Prefix to Text")
+    text_input = st.text_area("Enter Text:")
+    number_style = st.selectbox(
+        "Select Number Style:",
+        ("With dot", "With ()", "With []")
+    )
+    symbol_style = st.selectbox(
+        "Select Symbol Style:",
+        ("●", "■", "▶")
+    )
+    custom_style = st.text_input("Enter Custom Style:")
+    number_prefix = get_number_style(number_style)
+    symbol_prefix = get_symbol_style(symbol_style)
+    if custom_style:
+        number_prefix = custom_style
+        symbol_prefix = custom_style
+    text_output_number = add_prefix(text_input, number_prefix)
+    text_output_symbol = add_prefix_with_symbol(text_input, symbol_prefix)
+    st.subheader("Output with Numbers:")
+    st.text_area("Output with Numbers:", text_output_number)
+    st.subheader("Output with Symbols:")
+    st.text_area("Output with Symbols:", text_output_symbol)
+    if st.button("Copy Output with Numbers"):
+        copy_to_clipboard(text_output_number)
+        st.success("Output with Numbers copied to clipboard!")
+    if st.button("Copy Output with Symbols"):
+        copy_to_clipboard(text_output_symbol)
+        st.success("Output with Symbols copied to clipboard!")
     if st.button("Reset"):
-        st.experimental_rerun()
+        st.text_input("Enter Text:")
+        st.empty()
+
+if __name__ == "__main__":
+    main()
