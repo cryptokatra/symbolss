@@ -59,7 +59,7 @@ with col1:
     st.text_area("Input Text:", text_input, height=200, key="my_unique_key") 
 with col2: 
     st.write("") 
-    st.selectbox("Select Format:", ["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]", "●", "■", "▶", "Custom"], key="my_unique_key") 
+    st.selectbox("Select Format:", ["With dot 1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]", "●", "■", "▶", "Custom"], key="my_unique") 
 with col3: 
     st.text_area("Output Text:", output_text, height=200, key="my_unique_key") 
  
