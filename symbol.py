@@ -1,63 +1,96 @@
 import streamlit as st
-from streamlit_bokeh_events import streamlit_bokeh_events
+import pyperclip
 
+st.set_page_config(page_title="Prefixer", layout="wide")
 
-def add_prefix_with_number(prefix, number_style):
-    return f"{number_style}{prefix}"
+# Define function for copying to clipboard
+def copy_to_clipboard(text):
+    pyperclip.copy(text)
+    st.sidebar.text("Copied to clipboard!")
+    
+# Define function for resetting the app
+def reset_app():
+    text_input.text("")
+    dropdown_num.selectbox("Select prefix style:", prefix_options)
+    dropdown_symbol.selectbox("Select symbol:", symbol_options)
+    custom_prefix_text.empty()
+    custom_symbol_text.empty()
+    output_text_B.empty()
+    output_text_C.empty()
 
+# Define prefix options
+prefix_options = ["With dot", "With ()", "With []", "Custom"]
 
-def add_prefix_with_symbol(prefix, symbol):
-    return f"{symbol} {prefix}"
+# Define symbol options
+symbol_options = ["●", "■", "▶", "Custom"]
 
+# Define streamlit widgets
+text_input = st.sidebar.text_area("Enter Text:")
+prefix_choice = st.sidebar.selectbox("Select prefix style:", prefix_options)
+dropdown_num = None
+custom_prefix_text = None
+if prefix_choice == "Custom":
+    custom_prefix_text = st.sidebar.text_input("Enter custom prefix:")
+else:
+    dropdown_num = st.sidebar.selectbox("", ["1. 2. 3.", "(1)(2)(3)", "[1][2][3]"])
 
-def main():
-    st.set_page_config(page_title="Prefix Adder", page_icon=":pencil2:")
+symbol_choice = st.sidebar.selectbox("Select symbol:", symbol_options)
+dropdown_symbol = None
+custom_symbol_text = None
+if symbol_choice == "Custom":
+    custom_symbol_text = st.sidebar.text_input("Enter custom symbol:")
+else:
+    dropdown_symbol = st.sidebar.selectbox("", ["●", "■", "▶"])
 
-    st.title("Prefix Adder")
+output_text_B = st.empty()
+output_text_C = st.empty()
 
-    # Left-hand side: input text box
-    input_text = st.text_area("Enter text here")
+# Create buttons for copying the output
+if st.sidebar.button('Copy B'):
+    copy_to_clipboard(output_text_B.to_dict()['children'][0])
+if st.sidebar.button('Copy C'):
+    copy_to_clipboard(output_text_C.to_dict()['children'][0])
+if st.sidebar.button('Reset'):
+    reset_app()
 
-    # Middle: select number style and symbol style
-    number_style = st.selectbox("Select number style", options=["With dot  1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]"])
-    symbol_style = st.selectbox("Select symbol style", options=["●", "■", "▶", "Custom"])
+# Get text input and split into lines
+text = text_input.splitlines()
 
-    if symbol_style == "Custom":
-        custom_symbol = st.text_input("Enter custom symbol here")
+# Create new lines with prefixes based on user input
+new_lines_B = []
+prefix_num = 1
+for line in text:
+    prefix = ""
+    if prefix_choice == "With dot":
+        prefix = f"{prefix_num}. "
+    elif prefix_choice == "With ()":
+        prefix = f"({prefix_num})"
+    elif prefix_choice == "With []":
+        prefix = f"[{prefix_num}]"
     else:
-        custom_symbol = symbol_style
+        prefix = f"{custom_prefix_text.value} "
+    new_line = f"{prefix}{line}"
+    new_lines_B.append(new_line)
+    prefix_num += 1
 
-    # Right-hand side: output text boxes
-    output_with_number = st.text_area("Output with number prefix")
-    output_with_symbol = st.text_area("Output with symbol prefix")
+# Join new lines and write to output text box B
+if len(new_lines_B) > 0:
+    output_text_B.markdown("\n".join(new_lines_B))
 
-    # Add prefixes to input text when button is clicked
-    if streamlit_bokeh_events("Add prefixes", key="add_button"):
-        input_lines = input_text.split("\n")
-        for i, line in enumerate(input_lines):
-            output_with_number.write(add_prefix_with_number(line, i+1))
-            output_with_number.write("\n")
+# Create new lines with suffixes based on user input
+new_lines_C = []
+for line in text:
+    if symbol_choice == "●":
+        suffix = " ●"
+    elif symbol_choice == "■":
+        suffix = " ■"
+    elif symbol_choice == "▶":
+        suffix = " ▶"
+    else:
+        suffix = f" {custom_symbol_text.value}"
+    new_line = f"{line}{suffix}"
+    new_lines_C.append(new_line)
 
-            output_with_symbol.write(add_prefix_with_symbol(line, custom_symbol))
-            output_with_symbol.write("\n")
-
-    # Buttons to copy output text and reset
-    col1, col2, col3 = st.beta_columns([1, 1, 1])
-
-    if col1.button("Copy output with number prefix"):
-        st.experimental_set_query_params(output_with_number.to_dataframe().to_csv(index=False), key="number-output")
-    if col2.button("Copy output with symbol prefix"):
-        st.experimental_set_query_params(output_with_symbol.to_dataframe().to_csv(index=False), key="symbol-output")
-    if col3.button("Reset"):
-        output_with_number.empty()
-        output_with_symbol.empty()
-
-    # Display output text if query parameter is present
-    if "number-output" in st.experimental_get_query_params():
-        output_with_number.write(st.experimental_get_query_params()["number-output"][0])
-    if "symbol-output" in st.experimental_get_query_params():
-        output_with_symbol.write(st.experimental_get_query_params()["symbol-output"][0])
-
-
-if __name__ == "__main__":
-    main()
+# Join new lines and write to output text box C
+if len(new_lines_C) > 0:
+    output_text_C.markdown("\n".join(new_lines_C))
