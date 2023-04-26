@@ -1,70 +1,76 @@
 import streamlit as st
-import pyperclip
 
-def add_prefix(input_text, prefix):
-    output_text = []
-    for index, line in enumerate(input_text.splitlines(), start=1):
-        output_text.append(f"{prefix}{index}. {line}")
-    return '\n'.join(output_text)
+# Define the functions to add prefix to the text
+def add_prefix_with_dot(text):
+    lines = text.split("\n")
+    prefix = ""
+    new_lines = []
+    for i, line in enumerate(lines):
+        new_lines.append(f"{prefix}{i+1}. {line}")
+    return "\n".join(new_lines)
 
-def add_prefix_with_symbol(input_text, symbol):
-    output_text = []
-    for line in input_text.splitlines():
-        output_text.append(f"{symbol} {line}")
-    return '\n'.join(output_text)
+def add_prefix_with_parenthesis(text):
+    lines = text.split("\n")
+    prefix = ""
+    new_lines = []
+    for i, line in enumerate(lines):
+        new_lines.append(f"{prefix}({i+1}){line}")
+    return "\n".join(new_lines)
 
-def get_number_style(style):
-    if style == "With dot":
-        return "."
-    elif style == "With ()":
-        return "()"
-    elif style == "With []":
-        return "[]"
+def add_prefix_with_bracket(text):
+    lines = text.split("\n")
+    prefix = ""
+    new_lines = []
+    for i, line in enumerate(lines):
+        new_lines.append(f"{prefix}[{i+1}]{line}")
+    return "\n".join(new_lines)
 
-def get_symbol_style(style):
-    if style == "●":
-        return "●"
-    elif style == "■":
-        return "■"
-    elif style == "▶":
-        return "▶"
+# Define the Streamlit app
+def app():
+    st.set_page_config(page_title="Prefix Adder")
 
-def copy_to_clipboard(text):
-    pyperclip.copy(text)
+    st.title("Prefix Adder")
 
-# Create the Streamlit web app
-def main():
-    st.title("Add Prefix to Text")
-    text_input = st.text_area("Enter Text:")
-    number_style = st.selectbox(
-        "Select Number Style:",
-        ("With dot", "With ()", "With []")
-    )
-    symbol_style = st.selectbox(
-        "Select Symbol Style:",
-        ("●", "■", "▶")
-    )
-    custom_style = st.text_input("Enter Custom Style:")
-    number_prefix = get_number_style(number_style)
-    symbol_prefix = get_symbol_style(symbol_style)
-    if custom_style:
-        number_prefix = custom_style
-        symbol_prefix = custom_style
-    text_output_number = add_prefix(text_input, number_prefix)
-    text_output_symbol = add_prefix_with_symbol(text_input, symbol_prefix)
-    st.subheader("Output with Numbers:")
-    st.text_area("Output with Numbers:", text_output_number)
-    st.subheader("Output with Symbols:")
-    st.text_area("Output with Symbols:", text_output_symbol)
-    if st.button("Copy Output with Numbers"):
-        copy_to_clipboard(text_output_number)
-        st.success("Output with Numbers copied to clipboard!")
-    if st.button("Copy Output with Symbols"):
-        copy_to_clipboard(text_output_symbol)
-        st.success("Output with Symbols copied to clipboard!")
+    # Define the input text box
+    st.sidebar.header("Input Text")
+    text = st.sidebar.text_area("Enter text here", height=300)
+
+    # Define the prefix selection widgets
+    st.sidebar.header("Prefix Options")
+    prefix_type = st.sidebar.selectbox("Select prefix type", ["Numbers", "Symbols", "Custom"])
+    if prefix_type == "Numbers":
+        prefix_value = st.sidebar.selectbox("Select prefix value", ["1.2.3.", "(1)(2)(3)", "[1][2][3]"])
+    elif prefix_type == "Symbols":
+        prefix_value = st.sidebar.selectbox("Select prefix value", ["●", "■", "▶"])
+    else:
+        prefix_value = st.sidebar.text_input("Enter custom prefix value")
+
+    # Define the output text boxes
+    st.header("Output Text")
+    st.subheader("Text with numbered prefix")
+    if prefix_type == "Numbers":
+        output_text = add_prefix_with_dot(text) if prefix_value == "1.2.3." else \
+                      add_prefix_with_parenthesis(text) if prefix_value == "(1)(2)(3)" else \
+                      add_prefix_with_bracket(text) if prefix_value == "[1][2][3]" else ""
+    else:
+        output_text = f"{prefix_value}\n{text}".replace("\n", f"\n{prefix_value}")
+    st.text_area("Text with numbered prefix", value=output_text, height=300)
+    st.subheader("Text with symbol prefix")
+    if prefix_type == "Numbers":
+        st.text_area("Text with symbol prefix", value="")
+    else:
+        output_text = f"{prefix_value}\n{text}".replace("\n", f"\n{prefix_value}")
+        st.text_area("Text with symbol prefix", value=output_text, height=300)
+
+    # Define the copy and reset buttons
+    if st.button("Copy text with numbered prefix"):
+        st.write("Text copied to clipboard!")
+        st.experimental_set_query_params(output_text=output_text)
+    if st.button("Copy text with symbol prefix"):
+        st.write("Text copied to clipboard!")
+        st.experimental_set_query_params(output_text=output_text)
     if st.button("Reset"):
-        st.text_input("Enter Text:")
-        st.empty()
-
+        st.experimental_set_query_params(output_text="")
+        
 if __name__ == "__main__":
-    main()
+    app()
