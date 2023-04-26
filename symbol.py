@@ -1,61 +1,45 @@
 import streamlit as st
-import re
 
-# Define functions to add prefixes
-def add_number_prefix(text, prefix):
-    lines = text.split('\n')
-    for i in range(len(lines)):
-        lines[i] = f"{prefix}{i+1}. {lines[i]}"
-    return '\n'.join(lines)
+def add_prefix(text, prefix):
+    prefix_list = []
+    if prefix == "With dot  1.2.3.":
+        for i in range(1, len(text) + 1):
+            prefix_list.append(str(i) + ".")
+    elif prefix == "With () (1)(2)(3)":
+        for i in range(1, len(text) + 1):
+            prefix_list.append("(" + str(i) + ")")
+    elif prefix == "With[] [1][2][3]":
+        for i in range(1, len(text) + 1):
+            prefix_list.append("[" + str(i) + "]")
+    else:
+        prefix_list = [prefix] * len(text)
+    return [prefix_list[i] + text[i] for i in range(len(text))]
 
-def add_symbol_prefix(text, prefix):
-    lines = text.split('\n')
-    for i in range(len(lines)):
-        lines[i] = f"{prefix} {lines[i]}"
-    return '\n'.join(lines)
+st.title("Add Prefix to Lines")
 
-# Define Streamlit app
-def app():
-    st.title("Add Prefixes to Text")
-    
-    # Define UI components
-    col1, col2, col3 = st.columns(3)
-    
-    # Column 1: Input text box
-    with col1:
-        st.header("Input Text")
-        input_text = st.text_area("Enter text")
-        
-    # Column 2: Prefix options
-    with col2:
-        st.header("Prefix Options")
-        prefix_type = st.selectbox(
-            "Select prefix type",
-            ("Number", "Symbol")
-        )
-        if prefix_type == "Number":
-            prefix_options = ("With dot  1.2.3.", "With () (1)(2)(3)", "With [] [1][2][3]")
-        else:
-            prefix_options = ("●", "■", "▶")
-        prefix = st.selectbox("Select prefix", prefix_options)
-        custom_prefix = st.text_input("Enter custom prefix (optional)")
-        
-    # Column 3: Output text box, copy and reset buttons
-    with col3:
-        st.header("Output Text")
-        if prefix_type == "Number":
-            if prefix == "With dot  1.2.3.":
-                prefix = "."
-            elif prefix == "With () (1)(2)(3)":
-                prefix = ")"
-            else:
-                prefix = "]"
-            output_text = add_number_prefix(input_text, prefix)
-        else:
-            output_text = add_symbol_prefix(input_text, prefix)
-        if custom_prefix:
-            output_text = add_symbol_prefix(input_text, custom_prefix)
-        st.text_area("Output", value=output_text)
-        if st.button("Copy"):
-            st.write("Copied to clipboard!")
-        st.button("Reset")
+# Define columns
+col1, col2, col3 = st.beta_columns(3)
+
+# Column 1: Text Input
+text_input = col1.text_area("Input Text:")
+
+# Column 2: Prefix Options and Input
+with col2.beta_form("options_form"):
+    prefix_type = st.selectbox("Select Prefix Type:", ["Numeric", "Symbolic"])
+    if prefix_type == "Numeric":
+        prefix = st.selectbox("Select Numeric Prefix Style:", ["With dot  1.2.3.", "With () (1)(2)(3)", "With[] [1][2][3]"])
+        text_input2 = st.text_input("Input Custom Numeric Prefix Style:")
+    else:
+        prefix = st.selectbox("Select Symbolic Prefix Style:", ["●", "■", "▶"])
+        text_input2 = st.text_input("Input Custom Symbolic Prefix Style:")
+
+# Column 3: Processed Text and Buttons
+converted_text = add_prefix(text_input.split("\n"), prefix) if prefix_type == "Numeric" else [prefix + line for line in text_input.split("\n")]
+output_text = "\n".join(converted_text)
+col3.text_area("Output Text:", output_text)
+if col3.button("Copy"):
+    st.experimental_set_query_params(text=output_text)
+    st.success("Copied to Clipboard!")
+if col3.button("Reset"):
+    st.experimental_set_query_params()
+    st.experimental_rerun()
