@@ -1,75 +1,58 @@
 import streamlit as st
 
-
-def get_prefixed_text(text, prefix):
-    lines = text.strip().split("\n")
+def add_prefix(input_text, prefix):
+    lines = input_text.split("\n")
+    output = []
     count = 1
-    indent = ""
-    if isinstance(prefix, int):
-        for i, line in enumerate(lines):
-            if line.strip() == "":
-                continue
-            lines[i] = f"{count:02d}.{indent}{line}"
+    for line in lines:
+        line = line.strip()
+        if line:
+            output.append(f"{prefix} {count}. {line}")
             count += 1
-    else:
-        for i, line in enumerate(lines):
-            if line.strip() == "":
-                continue
-            lines[i] = f"{prefix}{indent}{line}"
-    return "\n".join(lines)
-
-
-def main():
-    st.set_page_config(page_title="Add Prefix", page_icon=":pencil:")
-    st.title("Add Prefix to Text")
-
-    column1, column2, column3 = st.beta_columns((1, 1, 2))
-
-    with column1:
-        input_text = st.text_area("Enter Text")
-
-    with column2:
-        prefix_type = st.selectbox("Select Prefix Type", ("Number", "Symbol", "New Symbol 1", "New Symbol 2", "New Symbol 3"))
-        if prefix_type == "Number":
-            prefix_style = st.selectbox("Select Number Style", ("With dot", "With ()", "With []"))
         else:
-            prefix_style = st.text_input("Enter Symbol Style")
+            output.append(line)
+    return "\n".join(output)
 
-        if prefix_type == "New Symbol 1":
-            prefix_style = "●"
-        elif prefix_type == "New Symbol 2":
-            prefix_style = "■"
-        elif prefix_type == "New Symbol 3":
-            prefix_style = "▶"
+def get_prefix_style(prefix_style):
+    prefix = ""
+    if prefix_style == "With dot":
+        prefix = "."
+    elif prefix_style == "With ()":
+        prefix = "()"
+    elif prefix_style == "With[]":
+        prefix = "[]"
+    elif prefix_style == "●":
+        prefix = "●"
+    elif prefix_style == "■":
+        prefix = "■"
+    elif prefix_style == "▶":
+        prefix = "▶"
+    return prefix
 
-    with column3:
-        output_text = get_prefixed_text(input_text, 1)
-        output_text_area = st.empty()
-        copy_button = st.button("Copy")
-        reset_button = st.button("Reset")
+st.set_page_config(page_title="Prefix Adder")
 
-        if prefix_type == "Number":
-            if prefix_style == "With dot":
-                prefix = "1.2.3."
-            elif prefix_style == "With ()":
-                prefix = "(1)(2)(3)"
-            else:
-                prefix = "[1][2][3]"
-        else:
-            prefix = prefix_style
+st.title("Add Prefix to Each Line of Text")
 
-        if copy_button:
-            st.write("Text copied to clipboard!")
-            st.experimental_set_query_params(text=output_text)
-        elif reset_button:
-            input_text = ""
-            output_text = ""
-            output_text_area.text(output_text)
-        else:
-            if input_text.strip() != "":
-                output_text = get_prefixed_text(input_text, prefix)
-                output_text_area.text(output_text)
+input_text = st.text_area("Input Text", "", height=300)
 
+prefix_style = st.selectbox("Select Prefix Style", 
+    ["With dot", "With ()", "With[]", "●", "■", "▶"])
 
-if __name__ == "__main__":
-    main()
+custom_prefix = st.text_input("Custom Prefix", "")
+
+if custom_prefix:
+    prefix = custom_prefix
+else:
+    prefix = get_prefix_style(prefix_style)
+
+output_text = add_prefix(input_text, prefix)
+
+st.text_area("Output Text", output_text, height=300)
+
+if st.button("Copy"):
+    st.write("Output text copied to clipboard!")
+    st.experimental_set_query_params(output=output_text)
+
+if "output" in st.experimental_get_query_params():
+    copied_text = st.experimental_get_query_params()["output"]
+    st.text_area("Copied Text", copied_text, height=300)
