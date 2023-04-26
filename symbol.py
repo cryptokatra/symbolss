@@ -1,45 +1,46 @@
 import streamlit as st
 
-def add_prefix(input_text, prefix):
-    lines = input_text.split("\n")
-    prefix_lines = []
-    for i, line in enumerate(lines):
+def add_prefix(text, prefix):
+    lines = text.split("\n")
+    formatted_lines = []
+    i = 0
+    for line in lines:
         line = line.strip()
-        if line:
-            prefix_line = f"{prefix}{line}"
-            prefix_lines.append(prefix_line)
-    return "\n".join(prefix_lines)
+        if line == "":
+            formatted_lines.append(line)
+        else:
+            formatted_lines.append(f"{prefix}{i+1}. {line}")
+            i += 1
+    return "\n".join(formatted_lines)
 
 def main():
     st.title("Add Prefix to Text")
-
-    # Column 1
-    input_text = st.text_area("Enter Text")
-
-    # Column 2
-    format_options = ["With dot", "With ()", "With []", "●", "■", "▶", "Custom"]
-    format_option = st.selectbox("Select Format", format_options)
+    c_text = st.empty()
+    format_option = st.selectbox(
+        "Choose a Format",
+        [
+            "With dot  1.2.3.",
+            "With () (1)(2)(3)",
+            "With[] [1][2][3]",
+            "●",
+            "■",
+            "▶",
+            "Custom"
+        ]
+    )
     if format_option == "Custom":
-        prefix = st.text_input("Enter Custom Prefix")
+        custom_format = st.text_input("Enter Custom Prefix")
+        prefix = custom_format if custom_format != "" else "Custom"
     else:
-        if format_option == "With dot":
-            prefix = "1."
-        elif format_option == "With ()":
-            prefix = "(1)"
-        elif format_option == "With []":
-            prefix = "[1]"
-        else:
-            prefix = format_option
-
-    # Column 3
+        prefix = format_option
+    text = st.text_area("Enter Text Here")
     if st.button("Add Prefix"):
-        output_text = add_prefix(input_text, prefix)
-        st.text_area("Result", output_text)
+        text = add_prefix(text, prefix)
+        text = text.strip()
+        c_text.value = text
+    if st.button("Copy Text"):
+        st.write("Copied to Clipboard!")
 
-    if st.button("Copy"):
-        output_text = add_prefix(input_text, prefix)
-        st.write(output_text)
-        st.text_input("", value=output_text)
 
 if __name__ == "__main__":
     main()
